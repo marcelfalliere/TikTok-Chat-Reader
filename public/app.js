@@ -169,10 +169,22 @@ connection.on('like', (msg) => {
     }
 })
 
+
 // Member join
 let joinMsgDelay = 0;
 connection.on('member', (msg) => {
     if (window.settings.showJoins === "0") return;
+
+    //alisacu
+    let welcome = $('#welcome')[0].checked;
+    if (welcome) {
+        var tts = new SpeechSynthesisUtterance();
+        tts.text = "Bienvenue "+msg.nickname;
+        tts.voice = window.speechSynthesis.getVoices()[2];
+        tts.rate = 1.5;
+        tts.pitch = 0.4;
+        window.speechSynthesis.speak(tts);
+    }
 
     let addDelay = 250;
     if (joinMsgDelay > 500) addDelay = 100;
