@@ -9,6 +9,23 @@ const { clientBlocked } = require('./limiter');
 const app = express();
 const httpServer = createServer(app);
 
+const defaultHorseScore = {
+    'p1': {
+        name: 'player 1',
+        score: 0
+    },
+    'p2': {
+        name: 'player 2',
+        score: 0
+    }
+}
+
+var horseScore = JSON.parse(JSON.stringify(defaultHorseScore));
+
+app.get('/horse-score', (req, res) => {
+  res.send(horseScore);
+})
+
 // Enable cross origin resource sharing
 const io = new Server(httpServer, {
     cors: {
@@ -81,12 +98,32 @@ io.on('connection', (socket) => {
             tiktokConnectionWrapper.disconnect();
         }
     });
+
+    socket.on('horse-update-name', (data) => {
+        horseScore[data.playerId].name = data.name;
+        socket.emit('horse-score-update', horseScore);
+    });
+    socket.on('horse-update-score', (data) => {
+        horseScore[data.playerId].score += data.value;
+        socket.emit('horse-score-update', horseScore);
+    });
+
+    socket.on('horse-reset', (data) => {
+        horseScore = JSON.parse(JSON.stringify(defaultHorseScore));
+        socket.emit('horse-score-update', horseScore);
+    });
+    
 });
 
 // Emit global connection statistics
 setInterval(() => {
     io.emit('statistic', { globalConnectionCount: getGlobalConnectionCount() });
 }, 5000)
+
+setInterval(() => {
+    io.emit('ping', "ping");
+}, 1000)
+
 
 // Serve frontend files
 app.use(express.static('public'));
